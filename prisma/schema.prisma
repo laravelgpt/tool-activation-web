@@ -1,0 +1,490 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(USER)
+  credits      Float    @default(0)
+  isActive     Boolean  @default(true)
+  image        String?
+  referralCode String?  @unique
+  referredBy   String?
+  tokenVersion Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  licenses         License[]
+  activationLogs   ActivationLog[]
+  creditTransactions CreditTransaction[]
+  devices          Device[]
+  tickets          Ticket[]
+  payments         Payment[]
+  referrals        User[]       @relation("UserReferrals")
+  referrer         User?        @relation("UserReferrals", fields: [referredBy], references: [id])
+  ticketReplies    TicketReply[]
+  activityLogs     ActivityLog[]
+  notifications    Notification[]
+  twoFactorAuth    TwoFactorAuth?
+  auditLogs        AuditLog[]
+  
+  @@map("users")
+}
+
+model Device {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String?
+  hwid        String   @unique
+  ip          String?
+  mac         String?
+  deviceInfo  Json?
+  isActive    Boolean  @default(true)
+  lastSeen    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activationLogs ActivationLog[]
+  licenses       License[]
+  
+  @@map("devices")
+}
+
+model Tool {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  version     String?
+  downloadUrl String?
+  price       Float    @default(0)
+  isActive    Boolean  @default(true)
+  features    Json?
+  requirements Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  activationLogs ActivationLog[]
+  licenses       License[]
+  downloads      Download[]
+  
+  @@map("tools")
+}
+
+model License {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  userId      String
+  type        LicenseType @default(TRIAL)
+  deviceId    String?
+  toolId      String?
+  deviceInfo  Json?
+  expiresAt   DateTime?
+  usageLimit  Int         @default(0)
+  usageCount  Int         @default(0)
+  active      Boolean     @default(true)
+  lastUsedAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device         Device?        @relation(fields: [deviceId], references: [id])
+  tool           Tool?          @relation(fields: [toolId], references: [id])
+  activationLogs ActivationLog[]
+  
+  @@map("licenses")
+}
+
+model ActivationLog {
+  id         String           @id @default(cuid())
+  userId     String
+  licenseId  String
+  deviceId   String?
+  toolId     String?
+  ip         String?
+  hwid       String?
+  action     ActivationAction @default(UNLOCK)
+  timestamp  DateTime         @default(now())
+  creditUsed Float            @default(0)
+  result     ActivationResult @default(SUCCESS)
+  metadata   Json?
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  license License @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  device  Device? @relation(fields: [deviceId], references: [id])
+  tool    Tool?   @relation(fields: [toolId], references: [id])
+  
+  @@map("activation_logs")
+}
+
+model DhruServer {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  username    String
+  apiKey      String
+  isActive    Boolean  @default(true)
+  lastSync    DateTime?
+  services    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("dhru_servers")
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  groupId     String?
+  deliveryTime Int?
+  isActive    Boolean  @default(true)
+  dhruServiceId String?
+  dhruServerId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("services")
+}
+
+model CreditTransaction {
+  id          String           @id @default(cuid())
+  userId      String
+  amount      Float
+  type        TransactionType
+  description String?
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("credit_transactions")
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  userId      String
+  subject     String
+  message     String
+  status      TicketStatus @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  category    String?
+  assignedTo  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies  TicketReply[]
+  
+  @@map("tickets")
+}
+
+model TicketReply {
+  id          String   @id @default(cuid())
+  ticketId    String
+  userId      String?
+  message     String
+  isStaff     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id])
+  
+  @@map("ticket_replies")
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  userId      String
+  amount      Float
+  currency    String        @default("USD")
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  transactionId String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
+
+model News {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  excerpt     String?
+  imageUrl    String?
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("news")
+}
+
+model Download {
+  id          String   @id @default(cuid())
+  toolId      String
+  version     String
+  fileName    String
+  fileSize    Int?
+  downloadUrl String
+  isActive    Boolean  @default(true)
+  downloadCount Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tool Tool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  
+  @@map("downloads")
+}
+
+model ActivityLog {
+  id          String           @id @default(cuid())
+  userId      String
+  action      String
+  entityType  String
+  entityId    String?
+  description String?
+  metadata    Json?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("activity_logs")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  type        NotificationType @default(INFO)
+  title       String
+  message     String
+  data        Json?
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+}
+
+model Backup {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  size      Int
+  checksum  String
+  data      String   // JSON string containing backup data
+  createdAt DateTime @default(now())
+  
+  @@map("backups")
+}
+
+model TwoFactorAuth {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  secret       String
+  backupCodes  String   // JSON string array of backup codes
+  isEnabled    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("two_factor_auth")
+}
+
+model AuditLog {
+  id          String                                   @id @default(cuid())
+  userId      String
+  action      String
+  entityType  String
+  entityId    String?
+  description String?
+  metadata    Json?
+  ip          String?
+  userAgent   String?
+  severity    AuditSeverity                            @default(INFO)
+  timestamp   DateTime                                 @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+model ErrorEvent {
+  id          String   @id @default(cuid())
+  level       String   // 'error' | 'warning' | 'info' | 'debug'
+  type        String   // 'system' | 'application' | 'security' | 'performance' | 'network' | 'database'
+  message     String
+  stackTrace  String?
+  context     String   // JSON
+  userId      String?
+  sessionId   String?
+  ipAddress   String?
+  userAgent   String?
+  route       String?
+  resolved    Boolean  @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  resolution  String?
+  tags        String   // JSON array
+  severity    String   // 'low' | 'medium' | 'high' | 'critical'
+  count       Int      @default(1)
+  firstSeen   DateTime @default(now())
+  lastSeen    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  alerts ErrorAlert[]
+
+  @@map("error_events")
+}
+
+model ErrorRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  conditions  String   // JSON
+  actions     String   // JSON
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("error_rules")
+}
+
+model ErrorAlert {
+  id          String   @id @default(cuid())
+  errorId     String
+  type        String   // 'email' | 'sms' | 'webhook' | 'slack' | 'dashboard'
+  recipient   String
+  message     String
+  sent        Boolean  @default(false)
+  sentAt      DateTime?
+  retryCount  Int      @default(0)
+  maxRetries  Int      @default(3)
+  nextRetryAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  error ErrorEvent @relation(fields: [errorId], references: [id], onDelete: Cascade)
+
+  @@map("error_alerts")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPPORT
+}
+
+enum LicenseType {
+  TRIAL
+  STANDARD
+  PRO
+  ENTERPRISE
+}
+
+enum ActivationAction {
+  UNLOCK
+  CHECK
+  VERIFY
+  DOWNLOAD
+}
+
+enum ActivationResult {
+  SUCCESS
+  ERROR
+  FAILED
+  EXPIRED
+  LIMIT_REACHED
+  DEVICE_MISMATCH
+}
+
+enum TransactionType {
+  PURCHASE
+  USAGE
+  REFUND
+  BONUS
+  ADJUSTMENT
+  REFERRAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum PaymentMethod {
+  STRIPE
+  PAYPAL
+  CRYPTOCURRENCY
+  BANK_TRANSFER
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
