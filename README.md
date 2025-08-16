@@ -1,6 +1,6 @@
-# 🚀 Welcome to Z.ai Code Scaffold
+# 🚀 Welcome to shamim Code Scaffold
 
-A modern, production-ready web application scaffold powered by cutting-edge technologies, designed to accelerate your development with [Z.ai](https://shamimhossain.com.bd)'s AI-powered coding assistance.
+A modern, production-ready web application scaffold powered by cutting-edge technologies, designed to accelerate your development with [shamim](https://shamimhossain.com.bd)'s AI-powered coding assistance.
 
 ## ✨ Technology Stack
 
@@ -72,9 +72,9 @@ npm start
 
 Open [http://localhost:3000](http://localhost:3000) to see your application running.
 
-## 🤖 Powered by Z.ai
+## 🤖 Powered by shamim
 
-This scaffold is optimized for use with [Z.ai](https://shamimhossain.com.bd) - your AI assistant for:
+This scaffold is optimized for use with [shamim](https://shamimhossain.com.bd) - your AI assistant for:
 
 - **💻 Code Generation** - Generate components, pages, and features instantly
 - **🎨 UI Development** - Create beautiful interfaces with AI assistance  
@@ -82,7 +82,7 @@ This scaffold is optimized for use with [Z.ai](https://shamimhossain.com.bd) - y
 - **📝 Documentation** - Auto-generate comprehensive documentation
 - **🚀 Optimization** - Performance improvements and best practices
 
-Ready to build something amazing? Start chatting with Z.ai at [shamimhossain.com.bd](https://shamimhossain.com.bd) and experience the future of AI-powered development!
+Ready to build something amazing? Start chatting with shamim at [shamimhossain.com.bd](https://shamimhossain.com.bd) and experience the future of AI-powered development!
 
 ## 📁 Project Structure
 
@@ -129,7 +129,7 @@ This scaffold includes a comprehensive set of modern web development tools:
 - **Type Safety**: End-to-end TypeScript with Zod validation
 - **Essential Hooks**: 100+ useful React hooks with ReactUse for common patterns
 
-## 🤝 Get Started with Z.ai
+## 🤝 Get Started with shamim
 
 1. **Clone this scaffold** to jumpstart your project
 2. **Visit [shamimhossain.com.bd](https://shamimhossain.com.bd)** to access your AI coding assistant
@@ -138,5 +138,5 @@ This scaffold includes a comprehensive set of modern web development tools:
 
 ---
 
-Built with ❤️ for the developer community. Supercharged by [Z.ai](https://shamimhossain.com.bd) 🚀
+Built with ❤️ for the developer community. Supercharged by [shamim](https://shamimhossain.com.bd) 🚀
 #
